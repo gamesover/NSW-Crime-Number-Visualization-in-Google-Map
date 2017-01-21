@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<!--
+  Copyright 2011 Google Inc. All Rights Reserved.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<html>
+  <head>
+    <meta charset="UTF-8">
+
+    <title>NSW Crime Number Distribution</title>
+
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript"
+        src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+    <link href="https://developers.google.com/fusiontables/docs/samples/style/default.css"
+        rel="stylesheet" type="text/css">
+    <style type="text/css">
+      #map-canvas {
+        width: auto;
+      }
+
+      #visualization {
+        float: right;
+      }
+
+      #legend {
+        background: #FFF;
+        margin: 10px;
+        padding: 5px;
+        width: 150px;
+      }
+
+      #legend p {
+        font-weight: bold;
+        margin-top: 3px;
+      }
+
+      #legend div {
+        clear: both;
+      }
+
+      .color {
+        height: 12px;
+        width: 12px;
+        margin-right: 3px;
+        float: left;
+        display: block;
+      }
+
+      .red1 {
+        background: #F1EEF6;
+      }
+
+      .red2 {
+        background: #D4B9DA;
+      }
+
+      .red3 {
+        background: #C994C7;
+      }
+
+      .red4 {
+        background: #DF65B0;
+      }
+
+			.red5 {
+        background: #DD1C77;
+      }
+
+			.red6 {
+        background: #980043;
+      }
+    </style>
+
+    <script type="text/javascript">
+      google.load('visualization', '1', { packages: ['corechart'] });
+
+      /**
+       * Sector type mapped to a style rule.
+       * @type {Object}
+       * @const
+       */
+
+			var suburb;
+			var year;
+			var map;
+			var layer;
+
+			var COLUMN_STYLES = {
+        'ALL': [
+          {
+            'range': '0 - 10,000',
+            'color': '#F1EEF6'
+          },
+          {
+            'range': '10,000 - 50,000',
+            'color': '#D4B9DA'
+          },
+          {
+            'range': '50,000 - 100,000',
+            'color': '#C994C7'
+          },
+          {
+            'range': '100,000 - 200,000',
+            'color': '#DF65B0'
+          },
+					{
+            'range': '200,000 - 300,000',
+            'color': '#DD1C77'
+          },
+					{
+            'range': 'above 300,000',
+            'color': '#980043'
+          }
+        ],
+        '': [
+          {
+            'range': '0 - 1,000',
+            'color': '#F1EEF6'
+          },
+          {
+            'range': '1,000 - 2,000',
+            'color': '#D4B9DA'
+          },
+          {
+            'range': '2,000 - 3,000',
+            'color': '#C994C7'
+          },
+          {
+            'range': '3,000 - 4,000',
+            'color': '#DF65B0'
+          },
+					{
+            'range': '4,000 - 5,000',
+            'color': '#DD1C77'
+          },
+					{
+            'range': 'above 5,000',
+            'color': '#980043'
+          }
+        ]
+      };
+
+      function initialize() {
+        //var year = 'Residential';
+				suburb = '';
+				year = 'ALL';
+
+        map = new google.maps.Map(document.getElementById('map-canvas'), {
+          center: new google.maps.LatLng(-33.3, 146.9),
+          zoom: 6,
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
+          zoomControlOptions: {
+            style: google.maps.ZoomControlStyle.SMALL
+          },
+        });
+
+        layer = new google.maps.FusionTablesLayer();
+        updateLayerQuery(layer, year);
+        layer.setMap(map);
+
+        //createLegend(map, year);
+        styleLayerBySector(layer, year);
+        styleMap(map);
+        //drawVisualization('Alameda');
+
+        google.maps.event.addListener(layer, 'click', function(e) {
+          var suburb = e.row['Suburb'].value;
+					var yearCrime = e.row[year].value;
+          //drawVisualization(suburb);
+					e.infoWindowHtml = '<b>Suburb:</b> '+ suburb+'<br><b>Year of '+year+' Crime Number:</b> '+ numberWithCommas(yearCrime)+'<br><br>';//<p class="low">Low Usage</p>';
+          //var electricity = e.row['2010'].value;
+/*          if (electricity > 5000) {
+            e.infoWindowHtml = '<p class="high">High Usage!</p>';
+          } else if (electricity > 2500) {
+            e.infoWindowHtml = '<p class="medium">Medium Usage</p>';
+          } else {
+            e.infoWindowHtml = '<p class="low">Low Usage</p>';
+          }*/
+        });
+
+//				google.maps.event.addListener(layer, 'mouseover', function(e) {
+//					var suburb = e.row['Suburb'].value;
+//					var yearCrime = e.row[year].value;
+//          //drawVisualization(suburb);
+//					e.infoWindowHtml = '<b>Suburb:</b> '+ suburb+'<br><b>Year of '+year+' Crime Number:</b> '+ numberWithCommas(yearCrime)+'<br><br>';//<p 
+//					infowindow.open(map);
+//				});
+/*
+        google.maps.event.addDomListener(document.getElementById('year'),
+            'change', function() {
+              year = 'Residential';//this.value;
+              updateLayerQuery(layer, year);
+              styleLayerBySector(layer, year);
+              updateLegend(year);
+            });
+*/
+				drawYearVisualization(year);
+        google.maps.event.addDomListener(document.getElementById('suburb'),
+            'change', function() {
+              suburb = this.value;
+              updateLayerQuery(layer, year, suburb);
+							styleLayerBySector(layer, year);
+//              if (suburb && year == "ALL")
+//              {
+//								drawVisualization(suburb);
+//              }
+
+							if (!suburb)
+							{
+								drawYearVisualization(year);	
+							}
+							else
+							{
+								drawVisualization(suburb);	
+							}
+            });
+
+				addLegend(map);
+
+				google.maps.event.addDomListener(document.getElementById('year'),
+            'change', function() {
+              year = this.value;
+							updateLegend(year);
+							updateLayerQuery(layer, year, suburb);
+							styleLayerBySector(layer, year);
+							
+              if (!suburb)
+							{
+								drawYearVisualization(year);	
+							}
+							else
+							{
+								drawVisualization(suburb);	
+							}
+            });
+
+
+			  
+      }
+
+			function numberWithCommas(x) {
+					return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+			}
+
+      function updateLayerQuery(layer, year, suburb) {
+        var where;
+
+				//updateLegend(year);
+
+        if (suburb) {
+          where = "Suburb = '" + suburb + "'";
+        }
+        layer.setOptions({
+          query: {
+            select: 'geometry',
+            from: '183IZcRgD4Nce8qCUfrzlaVE_2iNKYn8EFS8A4hc',
+            where: where
+          }
+        });
+      }
+
+/*      function createLegend(map, year) {
+        var legendWrapper = document.createElement('div');
+        legendWrapper.id = 'legendWrapper';
+        legendWrapper.index = 1;
+        map.controls[google.maps.ControlPosition.LEFT_BOTTOM].push(
+            legendWrapper);
+        legendContent(legendWrapper, year);
+      }
+
+      function legendContent(legendWrapper, year) {
+        var legend = document.createElement('div');
+        legend.id = 'legend';
+
+        var title = document.createElement('p');
+        title.innerHTML = year + ' Electricity Consumption';
+        legend.appendChild(title);
+
+        var layerStyle = LAYER_STYLES[year];
+        var colors = layerStyle.colors;
+        var minNum = layerStyle.min;
+        var maxNum = layerStyle.max;
+        var step = (maxNum - minNum) / colors.length;
+        for (var i = 0; i < colors.length; i++) {
+          var legendItem = document.createElement('div');
+
+          var color = document.createElement('div');
+          color.setAttribute('class', 'color');
+          color.style.backgroundColor = colors[i];
+          legendItem.appendChild(color);
+
+          var newMin = minNum + step * i;
+          var newMax = newMin + step;
+          var minMax = document.createElement('span');
+          minMax.innerHTML = newMin + ' - ' + newMax;
+          legendItem.appendChild(minMax);
+
+          legend.appendChild(legendItem);
+        }
+
+        legendWrapper.appendChild(legend);
+      }
+
+      function updateLegend(year) {
+        var legendWrapper = document.getElementById('legendWrapper');
+        var legend = document.getElementById('legend');
+        legendWrapper.removeChild(legend);
+        legendContent(legendWrapper, year);
+      }*/
+/*
+      function styleLayerBySector(layer, year) {
+				year = 'Residential';
+        var layerStyle = LAYER_STYLES[year];
+        var colors = layerStyle.colors;
+        var minNum = layerStyle.min;
+        var maxNum = layerStyle.max;
+        var step = (maxNum - minNum) / colors.length;
+
+        var styles = new Array();
+        for (var i = 0; i < colors.length; i++) {
+          var newMin = minNum + step * i;
+          styles.push({
+            where: generateWhere(newMin, year),
+            polygonOptions: {
+              fillColor: colors[i],
+              fillOpacity: 1
+            }
+          });
+        }
+        layer.set('styles', styles);
+      }
+*/
+			function styleLayerBySector(layer, year) {
+
+			//updateLegend(year);
+
+			var styles;
+			if (year == 'ALL' && !suburb)
+			{
+				styles = [
+			{
+				where: year + ' <= 10000',
+				polygonOptions: {
+					fillColor: '#F1EEF6'
+				}
+			},{
+				where: year + ' > 10000 AND ' + year + ' <= 50000',
+				polygonOptions: {
+					fillColor: '#D4B9DA'
+				}
+			}, 
+			{
+				where: year + ' > 50000 AND ' + year + ' <= 100000',
+				polygonOptions: {
+					fillColor: '#C994C7'
+				}
+			},{
+				where: year + ' > 100000 AND ' + year + ' <= 200000',
+				polygonOptions: {
+					fillColor: '#DF65B0'
+				}
+			},
+			{
+				where: year + ' > 200000 AND ' + year + ' <= 300000',
+				polygonOptions: {
+					fillColor: '#DD1C77'
+				}
+			},{
+				where: year + ' > 300000',
+				polygonOptions: {
+					fillColor: '#980043',
+					//fillOpacity: 1.0
+				}}
+			];
+			}
+			else if(!suburb)
+			{
+
+				styles = [
+			{
+				where: "'" + year + "' <= 1000",//+and,// AND Suburb = '+suburb,
+				polygonOptions: {
+					fillColor: '#F1EEF6'
+					
+					
+				}
+			},{
+				where: "'" + year + "' > 1000 AND '" + year + "' <= 2000",
+				polygonOptions: {
+					fillColor: '#D4B9DA'
+				}
+			}, 
+			{
+				where: "'" + year + "' > 2000 AND '" + year + "' <= 3000",
+				polygonOptions: {
+					fillColor: '#C994C7'
+				}
+			},{
+				where: "'" + year + "' > 3000 AND '" + year + "' <= 4000",
+				polygonOptions: {
+					fillColor: '#DF65B0'
+				}
+			},
+			{
+				where: "'" + year + "' > 4000 AND '" + year + "' <= 5000",
+				polygonOptions: {
+					fillColor: '#DD1C77'
+				}
+			},{
+				where: "'" + year + "' > 5000",
+				polygonOptions: {
+					fillColor: '#980043',
+					//fillOpacity: 1.0
+				}}
+			];}
+
+			else 
+			{
+
+				styles = [
+			{
+				where: "Suburb = '" + suburb + "' AND '" + year + "' <= 1000",//+and,// AND Suburb = '+suburb,
+				polygonOptions: {
+					fillColor: '#F1EEF6'
+					
+					
+				}
+			},{
+				where: "Suburb = '" + suburb + "' AND '" + year + "' > 1000 AND '" + year + "' <= 2000",
+				polygonOptions: {
+					fillColor: '#D4B9DA'
+				}
+			}, 
+			{
+				where: "Suburb = '" + suburb + "' AND '" + year + "' > 2000 AND '" + year + "' <= 3000",
+				polygonOptions: {
+					fillColor: 'C994C7'
+				}
+			},{
+				where: "Suburb = '" + suburb + "' AND '" + year + "' > 3000 AND '" + year + "' <= 4000",
+				polygonOptions: {
+					fillColor: '#DF65B0'
+				}
+			},
+			{
+				where: "Suburb = '" + suburb + "' AND '" + year + "' > 4000 AND '" + year + "' <= 5000",
+				polygonOptions: {
+					fillColor: '#DD1C77'
+				}
+			},{
+				where: "Suburb = '" + suburb + "' AND '" + year + "' > 6000",
+				polygonOptions: {
+					fillColor: '#980043',
+					//fillOpacity: 1.0
+				}}
+			];}
+
+
+
+			layer.set('styles', styles);
+			}
+/*
+      function generateWhere(minNum, year) {
+        var whereClause = new Array();
+        //whereClause.push("Sector = '");
+        //whereClause.push(year);
+        whereClause.push("'2010' >= ");
+        whereClause.push(minNum);
+        return whereClause.join('');
+      }
+*/
+      function styleMap(map) {
+        var style = [{
+          featureType: 'all',
+          stylers: [{
+            saturation: -99
+          }]
+        }, {
+          featureType: 'poi',
+          stylers: [{
+            visibility: 'off'
+          }]
+        }, {
+          featureType: 'road',
+          stylers: [{
+            visibility: 'off'
+          }]
+        }];
+
+        var styledMapType = new google.maps.StyledMapType(style, {
+          map: map,
+          name: 'Styled Map'
+        });
+        map.mapTypes.set('map-style', styledMapType);
+        map.setMapTypeId('map-style');
+      }
+
+			// Initialize the legend
+      function addLegend(map) {
+        var legendWrapper = document.createElement('div');
+        legendWrapper.id = 'legendWrapper';
+        legendWrapper.index = 1;
+        map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(
+            legendWrapper);
+        legendContent(legendWrapper,year);
+      }
+
+      // Update the legend content
+      function updateLegend(year) {
+        var legendWrapper = document.getElementById('legendWrapper');
+        var legend = document.getElementById('legend');
+        legendWrapper.removeChild(legend);
+        legendContent(legendWrapper,year);
+      }
+
+      // Generate the content for the legend
+      function legendContent(legendWrapper,year) {
+        var legend = document.createElement('div');
+        legend.id = 'legend';
+
+        var title = document.createElement('p');
+        title.innerHTML = 'Crime Number';
+        legend.appendChild(title);
+
+				
+        var columnStyle = (year == 'ALL')? COLUMN_STYLES[year] : COLUMN_STYLES[''];
+
+        for (var i in columnStyle) {
+          var style = columnStyle[i];
+
+          var legendItem = document.createElement('div');
+
+          var color = document.createElement('span');
+          color.setAttribute('class', 'color');
+          color.style.backgroundColor = style.color;
+          legendItem.appendChild(color);
+
+          var range = document.createElement('span');
+          range.innerHTML = style.range;
+          legendItem.appendChild(range);
+
+          legend.appendChild(legendItem);
+        }
+
+        legendWrapper.appendChild(legend);
+      }
+
+      function drawVisualization(suburb) {
+        google.visualization.drawChart({
+          containerId: "visualization",
+          dataSourceUrl: "http://www.google.com/fusiontables/gvizdata?tq=",
+          query: "SELECT 'Suburb', '1995' ,'1996','1997','1998','1999','2000','2001','2002','2003','2004','2005','2006','2007','2008','2009','2010','2011','2012' FROM 15AXj0hq_TAL8L4qH5aJ4kRElKoX3aeIV1aVsZco WHERE Suburb = '" + suburb + "'",
+          chartType: "ColumnChart",
+          options: {
+            title: "Crime Number Tendency of Surburb " + suburb,
+            height: 600,
+            width: 600,
+						hAxis: {title: 'Year'},
+						vAxis: {title: 'Crime Number'}//,
+						//legend: 'none'
+
+						}
+
+          
+        });
+      }
+
+			function drawYearVisualization(year) {
+        google.visualization.drawChart({
+          containerId: "visualization",
+          dataSourceUrl: "http://www.google.com/fusiontables/gvizdata?tq=",
+          query: "SELECT Suburb, '" + year + "' FROM 15AXj0hq_TAL8L4qH5aJ4kRElKoX3aeIV1aVsZco order by '" + year + "' desc limit 10",
+          chartType: "ColumnChart",
+          options: {
+            title: "Top 10 Crime Number NSW Suburbs in Year " + year,
+            height: 600,
+            width: 600,
+						hAxis: {title: 'Surburb'},
+						vAxis: {title: 'Crime Number'},
+						legend: 'none'
+          }
+        });
+      }
+
+      google.maps.event.addDomListener(window, 'load', initialize);
+    </script>
+  </head>
+  <body>
+    <div id="visualization"></div>
+    <div id="map-canvas"></div>
+    <form>
+      <label>Year </label>
+      <select id="year">
+				<option value="ALL">--Select--</option>
+        <option value="1995">1995</option>
+				<option value="1996">1996</option>
+				<option value="1997">1997</option>
+				<option value="1998">1998</option>
+				<option value="1999">1999</option>
+				<option value="2000">2000</option>
+				<option value="2001">2001</option>
+				<option value="2002">2002</option>
+				<option value="2003">2003</option>
+				<option value="2004">2004</option>
+				<option value="2005">2005</option>
+				<option value="2006">2006</option>
+				<option value="2007">2007</option>
+				<option value="2008">2008</option>
+				<option value="2009">2009</option>
+				<option value="2010">2010</option>
+				<option value="2011">2011</option>
+				<option value="2012">2012</option>
+      </select>
+	
+      <label>Suburb</label>
+      <select id="suburb">
+				<option value="">--Select--</option>
+				<option value="Albury">Albury</option>
+				<option value="Armidale Dumaresq">Armidale Dumaresq</option>
+				<option value="Ashfield">Ashfield</option>
+				<option value="Auburn">Auburn</option>
+				<option value="Ballina">Ballina</option>
+				<option value="Balranald">Balranald</option>
+				<option value="Bankstown">Bankstown</option>
+				<option value="Bathurst Regional">Bathurst Regional</option>
+				<option value="Bega Valley">Bega Valley</option>
+				<option value="Bellingen">Bellingen</option>
+				<option value="Berrigan">Berrigan</option>
+				<option value="Blacktown">Blacktown</option>
+				<option value="Bland">Bland</option>
+				<option value="Blayney">Blayney</option>
+				<option value="Blue Mountains">Blue Mountains</option>
+				<option value="Bogan">Bogan</option>
+				<option value="Bombala">Bombala</option>
+				<option value="Boorowa">Boorowa</option>
+				<option value="Botany Bay">Botany Bay</option>
+				<option value="Bourke">Bourke</option>
+				<option value="Brewarrina">Brewarrina</option>
+				<option value="Broken Hill">Broken Hill</option>
+				<option value="Burwood">Burwood</option>
+				<option value="Byron">Byron</option>
+				<option value="Cabonne">Cabonne</option>
+				<option value="Camden">Camden</option>
+				<option value="Campbelltown">Campbelltown</option>
+				<option value="Canada Bay">Canada Bay</option>
+				<option value="Canterbury">Canterbury</option>
+				<option value="Carrathool">Carrathool</option>
+				<option value="Central Darling">Central Darling</option>
+				<option value="Cessnock">Cessnock</option>
+				<option value="Clarence Valley">Clarence Valley</option>
+				<option value="Cobar">Cobar</option>
+				<option value="Coffs Harbour">Coffs Harbour</option>
+				<option value="Conargo">Conargo</option>
+				<option value="Coolamon">Coolamon</option>
+				<option value="Cooma-Monaro">Cooma-Monaro</option>
+				<option value="Coonamble">Coonamble</option>
+				<option value="Cootamundra">Cootamundra</option>
+				<option value="Corowa Shire">Corowa Shire</option>
+				<option value="Cowra">Cowra</option>
+				<option value="Deniliquin">Deniliquin</option>
+				<option value="Dubbo">Dubbo</option>
+				<option value="Dungog">Dungog</option>
+				<option value="Eurobodalla">Eurobodalla</option>
+				<option value="Fairfield">Fairfield</option>
+				<option value="Forbes">Forbes</option>
+				<option value="Gilgandra">Gilgandra</option>
+				<option value="Glen Innes Severn">Glen Innes Severn</option>
+				<option value="Gloucester">Gloucester</option>
+				<option value="Gosford">Gosford</option>
+				<option value="Goulburn Mulwaree">Goulburn Mulwaree</option>
+				<option value="Great Lakes">Great Lakes</option>
+				<option value="Greater Hume Shire">Greater Hume Shire</option>
+				<option value="Greater Taree">Greater Taree</option>
+				<option value="Griffith">Griffith</option>
+				<option value="Gundagai">Gundagai</option>
+				<option value="Gunnedah">Gunnedah</option>
+				<option value="Guyra">Guyra</option>
+				<option value="Gwydir">Gwydir</option>
+				<option value="Harden">Harden</option>
+				<option value="Hawkesbury">Hawkesbury</option>
+				<option value="Hay">Hay</option>
+				<option value="Holroyd">Holroyd</option>
+				<option value="Hornsby">Hornsby</option>
+				<option value="Hunters Hill">Hunters Hill</option>
+				<option value="Hurstville">Hurstville</option>
+				<option value="Inverell">Inverell</option>
+				<option value="Jerilderie">Jerilderie</option>
+				<option value="Junee">Junee</option>
+				<option value="Kempsey">Kempsey</option>
+				<option value="Kiama">Kiama</option>
+				<option value="Kogarah">Kogarah</option>
+				<option value="Ku-ring-gai">Ku-ring-gai</option>
+				<option value="Kyogle">Kyogle</option>
+				<option value="Lachlan">Lachlan</option>
+				<option value="Lake Macquarie">Lake Macquarie</option>
+				<option value="Lane Cove">Lane Cove</option>
+				<option value="Leeton">Leeton</option>
+				<option value="Leichhardt">Leichhardt</option>
+				<option value="Lismore">Lismore</option>
+				<option value="Lithgow">Lithgow</option>
+				<option value="Liverpool">Liverpool</option>
+				<option value="Liverpool Plains">Liverpool Plains</option>
+				<option value="Lockhart">Lockhart</option>
+				<option value="Lord Howe Island">Lord Howe Island</option>
+				<option value="Maitland">Maitland</option>
+				<option value="Manly">Manly</option>
+				<option value="Marrickville">Marrickville</option>
+				<option value="Mid-Western Regional">Mid-Western Regional</option>
+				<option value="Moree Plains">Moree Plains</option>
+				<option value="Mosman">Mosman</option>
+				<option value="Murray">Murray</option>
+				<option value="Murrumbidgee">Murrumbidgee</option>
+				<option value="Muswellbrook">Muswellbrook</option>
+				<option value="Nambucca">Nambucca</option>
+				<option value="Narrabri">Narrabri</option>
+				<option value="Narrandera">Narrandera</option>
+				<option value="Narromine">Narromine</option>
+				<option value="Newcastle">Newcastle</option>
+				<option value="North Sydney">North Sydney</option>
+				<option value="Oberon">Oberon</option>
+				<option value="Orange">Orange</option>
+				<option value="Palerang">Palerang</option>
+				<option value="Parkes">Parkes</option>
+				<option value="Parramatta">Parramatta</option>
+				<option value="Penrith">Penrith</option>
+				<option value="Pittwater">Pittwater</option>
+				<option value="Port Macquarie-Hastings">Port Macquarie-Hastings</option>
+				<option value="Port Stephens">Port Stephens</option>
+				<option value="Prisons">Prisons</option>
+				<option value="Queanbeyan">Queanbeyan</option>
+				<option value="Randwick">Randwick</option>
+				<option value="Richmond Valley">Richmond Valley</option>
+				<option value="Rockdale">Rockdale</option>
+				<option value="Ryde">Ryde</option>
+				<option value="Shellharbour">Shellharbour</option>
+				<option value="Shoalhaven">Shoalhaven</option>
+				<option value="Singleton">Singleton</option>
+				<option value="Snowy River">Snowy River</option>
+				<option value="Strathfield">Strathfield</option>
+				<option value="Sutherland Shire">Sutherland Shire</option>
+				<option value="Sydney">Sydney</option>
+				<option value="Tamworth Regional">Tamworth Regional</option>
+				<option value="Temora">Temora</option>
+				<option value="Tenterfield">Tenterfield</option>
+				<option value="The Hills Shire">The Hills Shire</option>
+				<option value="Tumbarumba">Tumbarumba</option>
+				<option value="Tumut Shire">Tumut Shire</option>
+				<option value="Tweed">Tweed</option>
+				<option value="Unincorporated Far West">Unincorporated Far West</option>
+				<option value="Upper Hunter Shire">Upper Hunter Shire</option>
+				<option value="Upper Lachlan Shire">Upper Lachlan Shire</option>
+				<option value="Uralla">Uralla</option>
+				<option value="Urana">Urana</option>
+				<option value="Wagga Wagga">Wagga Wagga</option>
+				<option value="Wakool">Wakool</option>
+				<option value="Walcha">Walcha</option>
+				<option value="Walgett">Walgett</option>
+				<option value="Warren">Warren</option>
+				<option value="Warringah">Warringah</option>
+				<option value="Warrumbungle Shire">Warrumbungle Shire</option>
+				<option value="Waverley">Waverley</option>
+				<option value="Weddin">Weddin</option>
+				<option value="Wellington">Wellington</option>
+				<option value="Wentworth">Wentworth</option>
+				<option value="Willoughby">Willoughby</option>
+				<option value="Wingecarribee">Wingecarribee</option>
+				<option value="Wollondilly">Wollondilly</option>
+				<option value="Wollongong">Wollongong</option>
+				<option value="Woollahra">Woollahra</option>
+				<option value="Wyong">Wyong</option>
+				<option value="Yass Valley">Yass Valley</option>
+				<option value="Young">Young</option>
+      </select>
+    </form>
+  </body>
+</html>
+

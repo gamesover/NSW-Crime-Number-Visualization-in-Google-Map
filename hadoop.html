@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta name="Ken Ding" content="Project 2 of Grand Challenges " />
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<link rel="stylesheet" href="images/style.css" type="text/css" />
+	<title>Ken Ding -- Project 2 of Grand Challenges</title>
+</head>
+<body>
+	<div id="page" align="center">
+		<div id="content" style="width:800px">
+			<div id="logo">
+				<div style="margin-top:70px" class="whitetitle">GC - UofA</div>
+			</div>
+			<div id="topheader">
+				<div align="left" class="bodytext">
+					<br />
+					<strong>Ken Ding</strong><br />
+					Department of Computer Science<br />
+					University of Adelaide<br />
+					North Terrace, Adelaide SA 5005<br />
+					wenhe <strong>dot</strong> ding <strong>at</strong> student.adelaide.edu.au
+				</div>
+				<div id="toplinks" class="smallgraytext">
+					<a href="#">Home</a> | <a href="sitemap.xml">Sitemap</a> | <a href="contact.html">Contact Me</a>
+				</div>
+			</div>
+			<div id="menu">
+				<div align="right" class="smallwhitetext" style="padding:9px;">
+					<a href="index.html">Home</a> | <a href="introduction.html">Introduction</a> | <a href="dataset.html">DataSet</a> | <a href="hadoop.html">Hodoop</a> | <a href="googlemaps.html">Google Maps</a> | <a href="benefit.html">Benefit</a> | <a href="reflection.html">Reflection</a>
+				</div>
+			</div>
+			<div id="submenu">
+				<div align="right" class="smallgraytext" style="padding:9px;">
+					<a href="https://docs.google.com/presentation/d/165vgFpt-07iFwuhkM66Y14qWrrb03P_teXwfG2s5Kog/edit?usp=sharing" target="_blank">Pitch</a> | <a href="https://docs.google.com/presentation/d/1MuLNwdBuZ3BbagzzvfKs4GYcX5v4TH38XLqAr7WQLlY/edit?usp=sharing" target="_blank">First Cut</a> | <a href="thanks.html">Thanks</a>
+				</div>
+			</div>
+			<div id="contenttext">
+				<div style="padding:10px">
+					<span class="titletext">Google Hadoop</span>
+					</div>
+					<div class="bodytext" style="padding:12px;" align="justify">
+					<h2><span class="smalltitle"><strong>The Magic of MapReduce</strong></span><strong>: Map(), Shuffle(), Reduce() inspired by functional programming. Distributed System parallelly run tasks in mutiply nodes to facitate the computing. Strongly recommend <a href="https://cs.adelaide.edu.au/users/third/app/">Advanced Programming Paradigms(APP)</a> course in year 3 taught by <a href="http://cs.adelaide.edu.au/~brad/">Dr. Brad</a>.</strong></h2>
+					<br />
+					<h2><span class="smalltitle"><strong>Map()</strong></span><strong>: Using Suburb name as Keyword, each year's crime number or unemployment rate grouped in an array as value.</strong>					<br /><br />
+          {Suburb Name: [Start Year, Start Year + 1, ... , End Year]}
+          </h2>
+					<h2><span class="smalltitle"><strong>Shuffle()</strong><strong></strong></span><strong>: Split a big task to severl small tasks and assign each small task to a slave node to computing in parallel</strong></h2>
+					<br />
+          <h2><span class="smalltitle"><strong>Reduce()</strong><strong></strong></span><strong>: Each node to sum up own small task (suburb as key, summrize the same year crime number) to get a partial result, pass to master node and then master node combine them together to get final result</strong></h2>
+					<br />
+          
+					 
+				</div>
+			</div>
+			<div id="leftpanel">
+				<div align="justify" class="graypanel">
+					<span class="smalltitle">News</span><br /><br />
+					<span class="smallredtext">October 31, 2013</span><br />
+					<span class="bodytext">My Project 2 of Grand Challenges is online now. Please free feel to give me any feedback. I hope everybody could harvest a great score. Best wishes to you!</span><br />
+					<a href="10_31_2013.html" class="smallgraytext">More...</a><br /><br />
+					<!--
+					<span class="smallredtext">September 27, 2006</span><br />
+					<span class="bodytext">Curabitur arcu tellus, suscipit in, aliquam eget, ultricies id, sapien. Nam est.</span><br />
+					<a href="#" class="smallgraytext">More...</a><br /><br />
+					<span class="smallredtext">September 27, 2006</span><br />
+					<span class="bodytext">Curabitur arcu tellus, suscipit in, aliquam eget, ultricies id, sapien. Nam est.</span><br />
+					<a href="#" class="smallgraytext">More...</a><br /><br />
+					-->
+				</div>
+			</div>
+			<div id="footer" class="smallgraytext">
+				<a href="index.html">Home</a> | <a href="introduction.html">Introduction</a> | <a href="dataset.html">DataSet</a> | <a href="hadoop.html">Hodoop</a> | <a href="googlemaps.html">Google Maps</a> | <a href="benefit.html">Benefit</a> | <a href="reflection.html">Reflection</a>
+				| Ken Ding 
+				&copy; 2013 | <a href="http://www.biz.nf/" target="_blank">Hosting Biz.nf</a> 
+			</div>
+		</div>
+	</div>
+</body>
+</html>
